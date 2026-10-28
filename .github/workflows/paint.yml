@@ -1,11 +1,9 @@
 name: paint
 
-# Daily top-up of the wave. Runs after 12:00 UTC so the day's commits (stamped 12:00 UTC)
-# are never in the future. Missed runs are harmless: `extend` fills every day since the
-# last painted one. A failed `verify` fails the run, which is GitHub's email alert.
 on:
   schedule:
-    - cron: "30 12 * * *"
+    - cron: "41 12 * * *"
+    - cron: "17 19 * * *"
   workflow_dispatch:
 
 permissions:
@@ -20,19 +18,18 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          fetch-depth: 2000   # enough history to find the last art day and verify a week
+          fetch-depth: 2000
 
-      - name: Paint missing days
-        env:
+      - run: cc -o "$RUNNER_TEMP/p" paint.s
+
+      - env:
           PAINT_EMAIL: ${{ vars.USER_EMAIL }}
-        run: python3 paint.py extend
+        run: '"$RUNNER_TEMP/p" extend'
 
-      - name: Push
-        env:
+      - env:
           BRANCH: ${{ github.ref_name }}
         run: git push origin "HEAD:$BRANCH"
 
-      - name: Verify last 7 days
-        run: python3 paint.py verify 7
+      - run: '"$RUNNER_TEMP/p" verify 7'
